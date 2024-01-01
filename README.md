@@ -23,8 +23,4 @@ pip install -r requirements.txt
 
 
 
-## Example Results
-![Example Results](https://github.com/noorkhokhar99/MediaPipe-Iris/blob/main/WhatsApp%20Image%202022-11-25%20at%2012.10.22%20PM.jpeg)
-
-
 
