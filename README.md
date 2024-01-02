@@ -2,7 +2,7 @@
 
 - Clone the repository.
 ```
-git clone https://github.com/noorkhokhar99/MediaPipe-Iris.git
+git clone https://github.com/lbhnsh/gaze-control.git
 ```
 - Goto the cloned folder.
 ```
