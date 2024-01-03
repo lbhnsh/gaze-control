@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# CVFPSCALC IS OPTIONAL
-# 
+# CVFPSCALC IS OPTIONAL     
+# LINE 163 to be commented
 
 import copy
 import argparse
@@ -12,7 +12,11 @@ import numpy as np
 from utils import CvFpsCalc
 from face_mesh.face_mesh import FaceMesh
 from iris_landmark.iris_landmark import IrisLandmark
-
+import mediapipe as mp
+import matplotlib.pyplot as plt
+import itertools
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -65,10 +69,11 @@ def main():
     cvFpsCalc = CvFpsCalc(buffer_len=10)
 
     count=0
-    left_center_list=[]
-    left_radius_list=[]
+    # left_center_list=[]
+    # left_radius_list=[]
+    flag=0
     while True:
-        count+=1
+        # count+=1
         display_fps = cvFpsCalc.get()
 
         # Camera capture ################################################ ######
@@ -81,56 +86,74 @@ def main():
         # Detection ################################################ ###############
         # Face Mesh detection
         face_results = face_mesh(image)
+        # flag=0
+        # print(np.asarray(face_results).shape)
+        # print(" ")
+        # print(face_results)
+        if(len(face_results)==0):
+                flag=1
+                count=0
+        # *************************
+    # !wget -q -O image.jpg https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/woman_hands.jpg
+
+    # # STEP 2: Create an HandLandmarker object.
+    #         base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    #         options = vision.HandLandmarkerOptions(base_options=base_options,
+    #                                     num_hands=2)
+    #         detector = vision.HandLandmarker.create_from_options(options)
+
+    # # STEP 3: Load the input image.
+    #         handframe = image
+    #         # image= mp.
+    # # STEP 4: Detect hand landmarks from the input image.
+    #         detection_result = detector.detect(handframe)
+    #         print(len(detection_result))
+    # # STEP 5: Process the classification result. In this case, visualize it.
+    #         # annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
+    #         # cv2_imshow(cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
+
+        # *************************
+
+
         for face_result in face_results:
             # Calculate bounding box around eyes
-            left_eye, right_eye = face_mesh.calc_around_eye_bbox(face_result)
+            count+=1
+            if(flag==1 and len(face_result)==468 and count==int(0.5*display_fps)):
+                
+            # this function interacts with facemesh.py
+                left_eye, right_eye = face_mesh.calc_around_eye_bbox(face_result)
+            
+            # baai_aakh,daai_aakh=face_mesh.get_eyes(face_result)
 
             # Iris detection
-            left_iris, right_iris = detect_iris(image, iris_detector, left_eye,
+                left_iris, right_iris = detect_iris(image, iris_detector, left_eye,
                                                 right_eye)
 
             # Calculate the circumcircle of the iris
-            left_center, left_radius = calc_min_enc_losingCircle(left_iris)
-            right_center, right_radius = calc_min_enc_losingCircle(right_iris)
+                left_center, left_radius = calc_min_enc_losingCircle(left_iris)
+                right_center, right_radius = calc_min_enc_losingCircle(right_iris)
 
             # debug drawing
-            debug_image = draw_debug_image(
-                debug_image,
-                left_iris,
-                right_iris,
-                left_center,
-                left_radius,
-                right_center,
-                right_radius,
-            )
+                debug_image = draw_debug_image(
+                    debug_image,
+                    left_iris,
+                    right_iris,
+                    left_center,
+                    left_radius,
+                    right_center,
+                    right_radius,
+                )
 
-        left_radius_list.append(left_radius)
-        left_center_list.append(left_center)
-        # if(left_center_list[count] ):
-            # print("eye closed")
-        if(len(left_radius_list)>1.5*display_fps):
-            if left_radius_list[0]==left_radius_list[int(1.5*display_fps)]: #and left_radius_list[int(display_fps)]== left_radius_list[2*int(display_fps)]:
-                print("start",left_radius_list[0],left_radius_list[int(1.5*display_fps)])
+                
+                if abs(left_center[0]-face_result[33][0])-abs(left_center[0]-face_result[173][0])>7:
+                    print("right ")
+                elif abs(left_center[0]-face_result[33][0])-abs(left_center[0]-face_result[173][0])<=-4:
+                    print("left ")
+                else:
+                    print("open and centre")
 
-                # if left_radius_list[int(display_fps)]-left_radius_list[int(4*display_fps)]>0.5:
-            if(left_radius_list[int(display_fps)]-left_radius_list[0]>1.0):
-                print('eyes opened')
-                #     print("OPENED")
-            while len(left_radius_list)!=0:
-                left_radius_list.pop()
-        # if(len(left_center_list)>1.5*display_fps):
-        #     # print(left_radius_list[0],left_center_list[len(left_center_list)])
-        #     print(left_radius_list[0],left_center_list[int(display_fps)])
-        #     # if(left_radius_list[0]-left_center_list[len(left_center_list)]>0.5
-        #     #    and left_radius_list[0],left_center_list[len(left_center_list)]<1.5)
-        #     while len(left_center_list)!=0:
-        #         left_center_list.pop()
-        #         left_radius_list.pop()
-        # # print(f"hi{left_center}")
-
-        # cv.putText(debug_image, "FPS:" + str(display_fps), (10, 30),
-        #            cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv.LINE_AA)
-
+                flag=0
+            
         # Key processing (ESC: end) ############################################ #######
         key = cv.waitKey(1)
         if key == 27:  # ESC
